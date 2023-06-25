@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Mixer</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Video Mixer</h1>
+
+    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="videos[]" multiple>
+        <input type="submit" value="Upload Files">
+    </form>
+
+    <div id="uploadStatus"></div>
+
+    <button id="mixVideosBtn" style="display:none;" disabled>Mix Videos</button>
+    <div id="mixStatus"></div>
+    <a id="downloadLink" style="display:none;" download="mixed_video.mp4">Download Mixed Video</a>
+
+    <script>
+        $(document).ready(function () {
+            $('#uploadForm').submit(function (event) {
+                event.preventDefault();
+
+                var form = $(this);
+                var formData = new FormData(form[0]);
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    xhr: function () {
+                        var xhr = new window.XMLHttpRequest();
+                        xhr.upload.addEventListener('progress', function (e) {
+                            if (e.lengthComputable) {
+                                var percent = Math.round((e.loaded / e.total) * 100);
+                                $('#uploadStatus').text('Uploading: ' + percent + '%');
+                            }
+                        });
+                        return xhr;
+                    },
+                    success: function (data) {
+                        $('#uploadStatus').text('Upload Complete');
+                        $('#mixVideosBtn').show().prop('disabled', false);
+                    }
+                });
+            });
+
+            $('#mixVideosBtn').click(function () {
+                $.get('/mix', function (data) {
+                    $('#mixStatus').text(data);
+                    $('#downloadLink').show();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
